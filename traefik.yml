@@ -1,0 +1,45 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: INFO
+
+api:
+  dashboard: true # false for production
+  insecure: false # false for production
+
+entryPoints:
+  websecure:
+    address: ":443"
+    asDefault: true # V3 feature: makes this the default for routers
+    http:
+      tls:
+        certResolver: myresolver  # Links the resolver to the entrypoint
+      encodedCharacters:
+        allowEncodedSlash: true
+        allowEncodedPercent: true
+        allowEncodedQuestionMark: true
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: some@example.com.au # ${TRAEFIK_ACME_EMAIL}
+      storage: /acme.json
+      dnsChallenge:
+        provider: cloudflare
+        # Custom DNS servers to check for TXT record propagation
+        resolvers:
+          - "1.1.1.1:53"
+        propagation:
+          # Defines the delay before checking the challenge TXT record
+          delayBeforeChecks: 5s  # v3 often prefers duration strings (e.g., "5s")
