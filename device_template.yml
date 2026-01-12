@@ -1,0 +1,25 @@
+# Add a new device
+# cp device_template.yml nas.yml
+# edit as required
+# mv nas.yml dynamic/
+http:
+  routers:
+    nas: # step 1 rename
+      rule: "Host(`nas01.blockmania.network`)"
+      entryPoints:
+        - websecure
+      service: nas-service # step 2 rename  # <--- This connects to step 3
+      tls:
+        certResolver: myresolver
+        options: default
+
+  services:
+    nas-service: # step 3 rename <--- Name must match the line above in step 2
+      loadBalancer:
+        servers:
+          - url: "https://172.16.0.5:443" # device IP
+        serversTransport: insecureTransport
+
+  serversTransports:
+    insecureTransport:
+      insecureSkipVerify: true
