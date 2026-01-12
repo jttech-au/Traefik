@@ -1,0 +1,45 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      # - "80:80"
+      - "443:443"
+      # - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - ./acme.json:/acme.json
+    # Traefik config, change domain name
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com.au`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard.tls.domains[0].main=example.com.au"
+      - "traefik.http.routers.dashboard.tls.domains[0].sans=*.example.com.au"
+      - "traefik.http.routers.dashboard.service=api@internal" # Internal service for dashboard
+
+      # Auth for dashboard
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
+      - "traefik.http.routers.dashboard.middlewares=traefik-auth"
+
+      # IP allowlist (OPTIONAL but recommended)
+      # - "traefik.http.middlewares.traefik-ip.ipallowlist.sourcerange=192.168.0.0/16"
+
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+
+    networks:
+      - frontend
+
+networks:
+  frontend:
+    external: true
